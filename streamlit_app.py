@@ -130,7 +130,8 @@ def initialize_database():
         st.session_state.leave_quotas = {"annual": 14, "sick": 8, "casual": 10, "unpaid": 999}
         st.session_state.public_holidays = ["2026-03-23", "2026-05-01", "2026-08-14", "2026-11-09", "2026-12-25"]
 
-        # Default Active Role
+        # Authentication State
+        st.session_state.is_logged_in = False
         st.session_state.current_role = "Admin"
         st.session_state.current_user_id = "EMP001"
 
@@ -303,7 +304,80 @@ def log_audit(actor, action, entity, details):
         "details": details
     })
 
-# ----------------- SIDEBAR NAVIGATION & ROLE CONTEXT -----------------
+# ----------------- AUTHENTICATION GATE & LOGIN SCREEN -----------------
+if not st.session_state.get("is_logged_in", False):
+    st.markdown("""
+    <div style="max-width:580px; margin:30px auto 15px auto; text-align:center;">
+        <div style="display:inline-block; background:#14b8a6; padding:12px 18px; border-radius:14px; font-weight:900; font-size:24px; color:#022c22; margin-bottom:12px; box-shadow:0 4px 12px rgba(20,184,166,0.3);">HCM</div>
+        <h1 style="color:#f8fafc; font-size:2.1rem; font-weight:800; margin:0; letter-spacing:-0.02em;">Saylani Hackathon 2026</h1>
+        <h3 style="color:#5eead4; font-size:1.15rem; font-weight:600; margin:6px 0 16px 0;">HCM Lite — AI-Assisted Human Capital Management</h3>
+        <p style="color:#94a3b8; font-size:0.85rem; line-height:1.5;">
+            Select your designated role to enter the system. Each role operates with its own dedicated menus, database permissions, and AI assistant scope.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_l, col_m, col_r = st.columns([1, 2.5, 1])
+    with col_m:
+        st.markdown("""
+        <div style="background:#0e1626; border:1px solid #1e293b; border-radius:16px; padding:24px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);">
+        """, unsafe_allow_html=True)
+        
+        tab_admin, tab_hr, tab_emp = st.tabs(["🛡️ Admin Portal", "👥 HR Operations", "💼 Employee Portal"])
+
+        with tab_admin:
+            st.markdown("##### 🛡️ Company Administrator Login")
+            st.caption("Full company control, executive dashboard, attendance monitor, employee setup, payroll lock, and master audit trail.")
+            st.text_input("Admin Work Email", value="asad.admin@technova.com", disabled=True, key="login_admin_email")
+            st.text_input("Master Password", value="••••••••", type="password", disabled=True, key="login_admin_pass")
+            if st.button("🚀 Sign In as Admin (Muhammad Asad)", use_container_width=True, type="primary"):
+                st.session_state.is_logged_in = True
+                st.session_state.current_role = "Admin"
+                st.session_state.current_user_id = "EMP001"
+                log_audit("Muhammad Asad", "LOGIN", "Auth", "Logged in as Company Admin")
+                st.rerun()
+
+        with tab_hr:
+            st.markdown("##### 👥 HR People Operations Login")
+            st.caption("Register employees, dry-run CSV imports, daily attendance board, leave approval inbox, and monthly payroll runs.")
+            st.text_input("HR Work Email", value="fatima.hr@technova.com", disabled=True, key="login_hr_email")
+            st.text_input("HR Password", value="••••••••", type="password", disabled=True, key="login_hr_pass")
+            if st.button("🚀 Sign In as HR (Fatima Zahra)", use_container_width=True, type="primary"):
+                st.session_state.is_logged_in = True
+                st.session_state.current_role = "HR"
+                st.session_state.current_user_id = "EMP002"
+                log_audit("Fatima Zahra", "LOGIN", "Auth", "Logged in as HR Lead")
+                st.rerun()
+
+        with tab_emp:
+            st.markdown("##### 💼 Employee Self-Service Login")
+            st.caption("Check in via Web/Camera with geofencing, submit smart leave, download payslips, and personal AI assistant.")
+            emp_list = [e for e in st.session_state.employees if e["role"] == "Employee"]
+            if not emp_list:
+                emp_list = st.session_state.employees
+            emp_choices = {e["employee_id"]: e["name"] + " (" + e["designation"] + ")" for e in emp_list}
+            chosen_id = st.selectbox("Choose Employee Account", list(emp_choices.keys()), format_func=lambda x: emp_choices[x], key="login_emp_select")
+            chosen_obj = next((e for e in st.session_state.employees if e["employee_id"] == chosen_id), None)
+            st.text_input("Work Email", value=chosen_obj["email"] if chosen_obj else "emp@technova.com", disabled=True, key="login_emp_email")
+            st.text_input("Password", value="••••••••", type="password", disabled=True, key="login_emp_pass")
+            if st.button("🚀 Sign In as Employee", use_container_width=True, type="primary"):
+                st.session_state.is_logged_in = True
+                st.session_state.current_role = "Employee"
+                st.session_state.current_user_id = chosen_id
+                log_audit(chosen_obj["name"] if chosen_obj else "Employee", "LOGIN", "Auth", "Logged in as Employee")
+                st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<br/>", unsafe_allow_html=True)
+        st.info("💡 **Hackathon Evaluator Notice:** You can sign in with any role above to test its respective permissions and views. To switch roles at any time, click **Sign Out** in the sidebar.")
+
+    st.stop()
+
+# ----------------- SIDEBAR: LOGGED IN USER CONTEXT -----------------
+curr_user = next((e for e in st.session_state.employees if e["employee_id"] == st.session_state.current_user_id), None)
+curr_user_name = curr_user["name"] if curr_user else "User"
+selected_role = st.session_state.current_role
+
 with st.sidebar:
     st.markdown("""
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
@@ -315,29 +389,17 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("👤 Role & Access Scope")
-    
-    selected_role = st.selectbox(
-        "Active Role Context",
-        ["Admin", "HR", "Employee"],
-        index=["Admin", "HR", "Employee"].index(st.session_state.current_role)
-    )
-    st.session_state.current_role = selected_role
+    # Active User Profile Card
+    st.markdown(f"""
+    <div style="background:#090f1d; border:1px solid #1e293b; border-radius:12px; padding:12px; margin-bottom:12px;">
+        <div style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:700;">Logged In User</div>
+        <div style="font-size:14px; font-weight:800; color:#f8fafc; margin-top:2px;">{curr_user_name}</div>
+        <div style="font-size:11px; color:#5eead4;">{curr_user['designation'] if curr_user else selected_role}</div>
+        <div style="font-size:10px; color:#64748b; margin-top:4px;">ID: {st.session_state.current_user_id} · {curr_user['department'] if curr_user else 'Org'}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Filter available accounts for this role
-    eligible_users = [e for e in st.session_state.employees if e["role"] == selected_role]
-    if not eligible_users:
-        eligible_users = st.session_state.employees[:1]
-
-    user_map = {u["employee_id"]: u["name"] + " (" + u["employee_id"] + ")" for u in eligible_users}
-    selected_user_id = st.selectbox("Active Account", list(user_map.keys()), format_func=lambda x: user_map[x])
-    st.session_state.current_user_id = selected_user_id
-
-    curr_user = next((e for e in st.session_state.employees if e["employee_id"] == selected_user_id), None)
-    curr_user_name = curr_user["name"] if curr_user else "User"
-
-    # Display Scope Badge
+    # Role Badge
     if selected_role == "Admin":
         st.markdown('<span class="badge-admin">Company Master Level</span>', unsafe_allow_html=True)
     elif selected_role == "HR":
@@ -345,17 +407,23 @@ with st.sidebar:
     else:
         st.markdown('<span class="badge-emp">Self-Service Level</span>', unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("📑 Modules Menu")
+    # Logout Button
+    if st.button("🚪 Sign Out / Switch Role", use_container_width=True):
+        st.session_state.is_logged_in = False
+        log_audit(curr_user_name, "LOGOUT", "Auth", "Signed out to login screen")
+        st.rerun()
 
-    # Dynamic role-based navigation tree (Matching Figure 1 of Brief)
+    st.markdown("---")
+    st.subheader("📑 Role Menu")
+
+    # Dynamic role-based navigation tree
     if selected_role == "Admin":
         nav_items = [
             "Executive Dashboard",
-            "Organization Setup (M2)",
-            "User Access & Logins (M1)",
+            "➕ Add New Employee / HR (M3)",
             "All Employees Directory (M3)",
             "Company Attendance Monitor (M4)",
+            "Organization Setup (M2)",
             "Leave Approvals & Quotas (M5)",
             "Payroll Finalization & Lock (M6)",
             "AI Assistant (Company Scope)",
@@ -365,6 +433,7 @@ with st.sidebar:
     elif selected_role == "HR":
         nav_items = [
             "HR Operations Dashboard",
+            "➕ Add New Employee (M3)",
             "Employees Management (M3)",
             "CSV Dry-Run Import & Export (M3)",
             "Daily Attendance Board (M4)",
@@ -377,8 +446,8 @@ with st.sidebar:
     else: # Employee
         nav_items = [
             "My Employee Hub",
-            "Biometric Camera & Web Check-in (M4)",
-            "Smart Leave Application (M5/M8)",
+            "🕒 Mark Web & Camera Attendance (M4)",
+            "🏖️ Smart Leave Application (M5/M8)",
             "My Attendance History (M4)",
             "My Official Payslips (M6)",
             "Ask My AI Assistant (M8)",
@@ -386,22 +455,24 @@ with st.sidebar:
             "5-Min Hackathon Demo Guide"
         ]
 
-    nav_choice = st.radio("Navigate to Module", nav_items)
+    nav_choice = st.radio("Navigate", nav_items)
 
     st.markdown("---")
     c_rst1, c_rst2 = st.columns(2)
-    if c_rst1.button("🔄 Fresh Reset", help="Start with zero dummy data"):
+    if c_rst1.button("🔄 Reset Data"):
         st.session_state.employees = []
         st.session_state.attendance = []
         st.session_state.leaves = []
         st.session_state.finalized_payrolls = {}
         st.session_state.audit_trail = []
-        log_audit("Admin", "RESET", "Database", "Database cleared to zero dummy data for judging fresh install.")
+        st.session_state.is_logged_in = False
+        log_audit("Admin", "RESET", "Database", "Database cleared to zero dummy data.")
         st.rerun()
 
-    if c_rst2.button("📥 Load Sample", help="Pre-load sample data for demo"):
+    if c_rst2.button("📥 Load Demo"):
         st.session_state.db_initialized = False
         initialize_database()
+        st.session_state.is_logged_in = True
         st.rerun()
 
 # ----------------- TOP HEADER BANNER -----------------
@@ -412,7 +483,7 @@ st.markdown(f"""
             <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:#5eead4; font-weight:700;">Saylani Hackathon 2026 · Zaitoon Ashraf IT Park</div>
             <h1 class="hcm-header-title">{st.session_state.company_name} — HCM Lite</h1>
             <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">
-                Active Context: <strong>{selected_role}</strong> · Logged in as: <strong>{curr_user_name} ({st.session_state.current_user_id})</strong>
+                Active Portal: <strong>{selected_role}</strong> · Signed in as: <strong>{curr_user_name} ({st.session_state.current_user_id})</strong>
             </div>
         </div>
         <div style="display:flex; gap:8px;">
@@ -421,8 +492,8 @@ st.markdown(f"""
                 <div style="font-weight:700; color:#5eead4;">{st.session_state.office_start.strftime('%H:%M')} (Grace {st.session_state.grace_minutes}m)</div>
             </div>
             <div style="background:rgba(255,255,255,0.08); padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); font-size:12px; text-align:center;">
-                <div style="color:#94a3b8; font-size:10px; text-transform:uppercase;">Geofence</div>
-                <div style="font-weight:700; color:#f8fafc;">{st.session_state.office_radius_m}m Perimeter</div>
+                <div style="color:#94a3b8; font-size:10px; text-transform:uppercase;">Perimeter</div>
+                <div style="font-weight:700; color:#f8fafc;">{st.session_state.office_radius_m}m Radius</div>
             </div>
         </div>
     </div>
@@ -674,6 +745,62 @@ elif nav_choice == "HR Operations Dashboard":
         else:
             st.info("No leave requests filed.")
 
+# ----------------- ADD NEW EMPLOYEE (DEDICATED MENU SCREEN) -----------------
+elif nav_choice in ["➕ Add New Employee (M3)", "➕ Add New Employee / HR (M3)"]:
+    st.header("➕ Register New Employee & Provision Login (Module 3)")
+    st.caption("HR and Admin can register employees with complete job and compensation details. This provisions their login credentials.")
+
+    with st.form("dedicated_add_emp_form"):
+        st.markdown("##### 👤 Employee Profile & Credentials")
+        c1, c2 = st.columns(2)
+        n_name = c1.text_input("Full Legal Name *", "Sara Ahmed")
+        n_email = c2.text_input("Work Email Address *", "sara.ahmed@technova.com")
+
+        c3, c4 = st.columns(2)
+        n_role = c3.selectbox("System Access Role *", ["Employee", "HR"] if selected_role == "HR" else ["Employee", "HR", "Admin"])
+        n_dept = c4.selectbox("Department *", st.session_state.departments)
+
+        c5, c6 = st.columns(2)
+        n_desig = c5.selectbox("Designation / Title *", st.session_state.designations)
+        n_salary = c6.number_input("Monthly Basic Salary (PKR) *", value=95000, step=5000, min_value=15000)
+
+        c7, c8 = st.columns(2)
+        n_gender = c7.selectbox("Gender", ["Female", "Male", "Other"])
+        n_joining = c8.date_input("Joining Date", datetime.date.today())
+
+        c9, c10 = st.columns(2)
+        n_phone = c9.text_input("Phone Number", "+92 300 9876543")
+        n_address = c10.text_input("Residential Address", "Karachi, Pakistan")
+
+        st.markdown("""
+        <div style="background:#090e17; border:1px solid #1e293b; border-radius:10px; padding:12px; font-size:12px; color:#94a3b8; margin:10px 0;">
+            🔒 <strong>Automatic Login Credentials:</strong><br/>
+            An employee account will be created with username <code>{}</code> and default temporary password <code>TempPass2026!</code>.
+        </div>
+        """.format(n_email), unsafe_allow_html=True)
+
+        if st.form_submit_button("✅ Register Employee & Create Login", type="primary", use_container_width=True):
+            new_id = f"EMP{len(st.session_state.employees)+1:03d}"
+            st.session_state.employees.append({
+                "employee_id": new_id,
+                "name": n_name,
+                "email": n_email,
+                "role": n_role,
+                "department": n_dept,
+                "designation": n_desig,
+                "joining_date": n_joining.isoformat(),
+                "basic_salary": n_salary,
+                "gender": n_gender,
+                "tenure_years": 0.0,
+                "phone": n_phone,
+                "address": n_address,
+                "status": "Active",
+                "first_login": True
+            })
+            log_audit(curr_user_name, "CREATE_EMPLOYEE", "Employee", f"Registered employee {n_name} ({new_id}) with {n_role} role")
+            st.success(f"🎉 Employee **{n_name}** ({new_id}) successfully registered! Login credentials provisioned.")
+            st.info("You can view their record in 'All Employees Directory' or sign in with their credentials from the login screen.")
+
 # ----------------- MODULE 3: EMPLOYEE DIRECTORY & CSV DRY-RUN -----------------
 elif nav_choice in ["All Employees Directory (M3)", "Employees Management (M3)", "CSV Dry-Run Import & Export (M3)"]:
     st.header("👥 Employee Directory & CSV Import/Export (Module 3)")
@@ -769,45 +896,11 @@ elif nav_choice in ["All Employees Directory (M3)", "Employees Management (M3)",
         else:
             st.info("No employee records registered.")
 
-        # Register employee form
-        if selected_role in ["Admin", "HR"]:
-            with st.expander("➕ Register New Employee (Auto-Generates Login)"):
-                with st.form("register_emp_form"):
-                    f1, f2 = st.columns(2)
-                    r_name = f1.text_input("Full Name", "Sara Ahmed")
-                    r_email = f2.text_input("Email", "sara@technova.com")
-                    r_dept = f1.selectbox("Department", st.session_state.departments)
-                    r_desig = f2.selectbox("Designation", st.session_state.designations)
-                    r_sal = f1.number_input("Basic Salary (PKR)", value=90000, step=5000)
-                    r_join = f2.date_input("Joining Date", datetime.date.today())
-
-                    if st.form_submit_button("Register & Create Temporary Login"):
-                        new_id = f"EMP{len(st.session_state.employees)+1:03d}"
-                        st.session_state.employees.append({
-                            "employee_id": new_id,
-                            "name": r_name,
-                            "email": r_email,
-                            "role": "Employee",
-                            "department": r_dept,
-                            "designation": r_desig,
-                            "joining_date": r_join.isoformat(),
-                            "basic_salary": r_sal,
-                            "gender": "Female",
-                            "tenure_years": 0.0,
-                            "phone": "+92 300 0000000",
-                            "address": "Karachi",
-                            "status": "Active",
-                            "first_login": True
-                        })
-                        log_audit("HR", "CREATE_EMPLOYEE", "Employee", f"Registered employee {r_name} ({new_id}) with temp password")
-                        st.success(f"Registered {r_name} ({new_id}) successfully!")
-                        st.rerun()
-
 # ----------------- MODULE 4: ATTENDANCE & BIOMETRIC CAMERA -----------------
-elif nav_choice in ["Company Attendance Monitor (M4)", "Daily Attendance Board (M4)", "Biometric Camera & Web Check-in (M4)", "My Attendance History (M4)"]:
+elif nav_choice in ["Company Attendance Monitor (M4)", "Daily Attendance Board (M4)", "Biometric Camera & Web Check-in (M4)", "🕒 Mark Web & Camera Attendance (M4)", "My Attendance History (M4)"]:
     st.header("🕒 Attendance & Biometric Check-in (Module 4)")
 
-    if nav_choice == "Biometric Camera & Web Check-in (M4)":
+    if nav_choice in ["Biometric Camera & Web Check-in (M4)", "🕒 Mark Web & Camera Attendance (M4)"]:
         st.subheader("📍 Geofence & Camera Face Verification")
         st.markdown(f"**Office Perimeter:** `{st.session_state.office_lat}, {st.session_state.office_lng}` (Radius: `{st.session_state.office_radius_m}m`)")
 

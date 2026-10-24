@@ -34,6 +34,7 @@ import { PayrollModule } from './components/PayrollModule';
 import { AuditAndCommsModule } from './components/AuditAndCommsModule';
 import { AiAssistantDrawer } from './components/AiAssistantDrawer';
 import { StreamlitViewer } from './components/StreamlitViewer';
+import { LoginScreen } from './components/LoginScreen';
 import {
   LayoutDashboard,
   Users,
@@ -50,6 +51,9 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  // Authentication gate state - user must log in first with role
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
   // App initialization state
   const [settings, setSettings] = useState<OrgSettings>(INITIAL_SETTINGS);
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
@@ -325,6 +329,27 @@ export default function App() {
     }
   };
 
+  // Render initial Login Screen if not authenticated
+  if (!isLoggedIn) {
+    return (
+      <LoginScreen
+        employees={employees}
+        companyName={settings.companyName}
+        onLogin={(role, user) => {
+          setActiveRole(role);
+          setCurrentUser(user);
+          setIsLoggedIn(true);
+          setCurrentTab('dashboard');
+          addAuditEntry('LOGIN', 'Auth', `Logged in as ${user.name} (${role})`);
+        }}
+        onOpenStreamlit={() => {
+          setIsLoggedIn(true);
+          setCurrentTab('streamlit');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* Top Navbar */}
@@ -344,6 +369,10 @@ export default function App() {
         onResetInstall={handleResetToFreshInstall}
         unreadNotificationsCount={unreadNotifs}
         onOpenNotifications={() => setShowNotificationsModal(true)}
+        onLogout={() => {
+          setIsLoggedIn(false);
+          addAuditEntry('LOGOUT', 'Auth', `Signed out to login screen`);
+        }}
       />
 
       {/* GitHub ZIP Download Notice Banner */}
@@ -492,6 +521,7 @@ export default function App() {
                 setAiInitialPrompt(prompt);
                 setShowAiDrawer(true);
               }}
+              onNavigateTab={(tab) => setCurrentTab(tab)}
             />
           )}
 

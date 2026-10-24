@@ -96,7 +96,7 @@ export interface AuditLogEntry {
   id: string;
   timestamp: string;
   actor: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'FINALIZE' | 'LOGIN' | 'RESET';
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'FINALIZE' | 'LOGIN' | 'LOGOUT' | 'RESET';
   entity: string;
   details: string;
   beforeJson?: any;

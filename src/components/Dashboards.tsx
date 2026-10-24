@@ -22,6 +22,8 @@ import {
   Building,
   Award,
   ArrowUpRight,
+  UserPlus,
+  Settings,
 } from 'lucide-react';
 
 interface DashboardsProps {
@@ -37,6 +39,7 @@ interface DashboardsProps {
   onOpenCheckIn: () => void;
   onOpenLeaveApply: () => void;
   onOpenAiWithPrompt: (prompt: string) => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
 export const Dashboards: React.FC<DashboardsProps> = ({
@@ -52,6 +55,7 @@ export const Dashboards: React.FC<DashboardsProps> = ({
   onOpenCheckIn,
   onOpenLeaveApply,
   onOpenAiWithPrompt,
+  onNavigateTab,
 }) => {
   const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>('All');
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
@@ -298,6 +302,54 @@ export const Dashboards: React.FC<DashboardsProps> = ({
             </div>
           </div>
 
+          {/* Quick Actions Shortcuts for Admin */}
+          {onNavigateTab && (
+            <div className="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">
+                Admin Shortcuts:
+              </span>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('employees')}
+                className="flex items-center gap-1.5 bg-purple-950/70 hover:bg-purple-900/90 text-purple-300 border border-purple-800/80 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <UserPlus className="w-3.5 h-3.5 text-purple-400" />
+                <span>➕ Add / Manage Employees (M3)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('attendance')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <Clock className="w-3.5 h-3.5 text-teal-400" />
+                <span>🕒 Attendance Monitor (M4)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('payroll')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                <span>💵 Lock Payroll (M6)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('setup')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <Settings className="w-3.5 h-3.5 text-purple-400" />
+                <span>⚙️ Org Setup (M2)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('audit')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <span>🛡️ Audit Trail (M9)</span>
+              </button>
+            </div>
+          )}
+
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Department Headcount Bar Chart */}
@@ -441,6 +493,54 @@ export const Dashboards: React.FC<DashboardsProps> = ({
               <div className="text-[11px] text-slate-400 mt-1">Awaiting HR decision</div>
             </div>
           </div>
+
+          {/* Quick Actions Shortcuts for HR */}
+          {onNavigateTab && (
+            <div className="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">
+                HR Actions:
+              </span>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('employees')}
+                className="flex items-center gap-1.5 bg-teal-950/70 hover:bg-teal-900/90 text-teal-300 border border-teal-800/80 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <UserPlus className="w-3.5 h-3.5 text-teal-400" />
+                <span>➕ Add New Employee / Dry Run (M3)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('attendance')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <Clock className="w-3.5 h-3.5 text-teal-400" />
+                <span>🕒 Daily Attendance Board (M4)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('leave')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                <span>🏖️ Leave Approvals Inbox (M5)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('payroll')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                <span>💵 Monthly Payroll Run (M6)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('audit')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm"
+              >
+                <span>📢 Announcements & Audit (M9)</span>
+              </button>
+            </div>
+          )}
 
           {/* Top 5 Late-Comers Table & Leave Utilization */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

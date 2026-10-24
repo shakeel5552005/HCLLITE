@@ -11,6 +11,7 @@ import {
   Bell,
   Building2,
   Download,
+  LogOut,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -26,6 +27,7 @@ interface NavbarProps {
   onResetInstall: () => void;
   unreadNotificationsCount: number;
   onOpenNotifications: () => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -41,6 +43,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onResetInstall,
   unreadNotificationsCount,
   onOpenNotifications,
+  onLogout,
 }) => {
   const eligibleUsers = employees.filter((e) => e.role === activeRole);
 
@@ -186,6 +189,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <RotateCcw className="w-4 h-4" />
             </button>
+
+            {/* Logout / Switch Role */}
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                title="Sign Out / Switch Role (Back to Login Screen)"
+                className="flex items-center gap-1 bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 text-xs px-2.5 py-1.5 rounded-lg transition-colors font-medium ml-1"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

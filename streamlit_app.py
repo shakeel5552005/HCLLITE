@@ -894,7 +894,8 @@ elif nav_choice in ["AI Assistant (M8)", "AI HR Assistant (M8)", "Ask AI Assista
             today_str = datetime.date.today().isoformat()
             on_l = [l for l in st.session_state.leaves if l["status"] == "Approved"]
             if on_l:
-                st.success(f"📌 {len(on_l)} employee(s) are on approved leave: {', '.join([f'{l[\"employee_name\"]} ({l[\"leave_type\"]})' for l in on_l])}. [AI-generated]")
+                leave_details = ", ".join([l["employee_name"] + " (" + l["leave_type"] + ")" for l in on_l])
+                st.success(f"📌 {len(on_l)} employee(s) are on approved leave: {leave_details}. [AI-generated]")
             else:
                 st.success("No employees are on approved leave today. [AI-generated]")
         elif "sick leave" in query_low or "leave balance" in query_low:

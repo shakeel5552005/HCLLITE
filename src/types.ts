@@ -35,6 +35,10 @@ export interface Employee {
   status: 'Active' | 'Inactive' | 'Probation';
   firstLogin: boolean;
   avatarUrl?: string;
+  faceEnrolled?: boolean;
+  facePhotoUrl?: string;
+  faceDescriptor?: string;
+  faceEnrolledAt?: string;
 }
 
 export interface AttendanceRecord {
@@ -49,6 +53,8 @@ export interface AttendanceRecord {
   method: 'Web' | 'Camera' | 'Correction';
   verifiedLocation?: boolean;
   distanceMeters?: number;
+  faceVerified?: boolean;
+  faceConfidence?: number;
   correctionRequested?: boolean;
   correctionReason?: string;
 }

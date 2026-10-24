@@ -315,6 +315,10 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     address: 'Gulshan-e-Iqbal Block 13, Karachi',
     status: 'Active',
     firstLogin: false,
+    faceEnrolled: true,
+    facePhotoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    faceDescriptor: 'BIOMETRIC-SHA256-EMB-EMP001-9874',
+    faceEnrolledAt: '2026-01-15 09:30',
   },
   {
     employeeId: 'EMP002',
@@ -329,6 +333,10 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     address: 'PECHS Block 2, Karachi',
     status: 'Active',
     firstLogin: false,
+    faceEnrolled: true,
+    facePhotoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    faceDescriptor: 'BIOMETRIC-SHA256-EMB-EMP002-4129',
+    faceEnrolledAt: '2026-02-10 11:15',
   },
   {
     employeeId: 'EMP003',
@@ -343,6 +351,10 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     address: 'North Nazimabad Block H, Karachi',
     status: 'Active',
     firstLogin: false,
+    faceEnrolled: true,
+    facePhotoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    faceDescriptor: 'BIOMETRIC-SHA256-EMB-EMP003-8831',
+    faceEnrolledAt: '2026-02-15 14:20',
   },
   {
     employeeId: 'EMP004',
@@ -357,6 +369,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     address: 'Clifton Block 5, Karachi',
     status: 'Active',
     firstLogin: true,
+    faceEnrolled: false,
   },
   {
     employeeId: 'EMP005',
@@ -371,6 +384,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     address: 'Bahadurabad, Karachi',
     status: 'Active',
     firstLogin: false,
+    faceEnrolled: false,
   },
 ];
 

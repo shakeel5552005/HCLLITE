@@ -196,6 +196,38 @@ export default function App() {
     addAuditEntry('UPDATE', 'EmployeeProfile', `Updated contact info for ${updated.name}`);
   };
 
+  // Biometric Face Enrollment
+  const handleEnrollFace = (employeeId: string, photoUrl: string, descriptor: string) => {
+    const enrolledTime = new Date().toLocaleString();
+    setEmployees((prev) =>
+      prev.map((e) =>
+        e.employeeId === employeeId
+          ? {
+              ...e,
+              faceEnrolled: true,
+              facePhotoUrl: photoUrl,
+              faceDescriptor: descriptor,
+              faceEnrolledAt: enrolledTime,
+            }
+          : e
+      )
+    );
+    if (currentUser.employeeId === employeeId) {
+      setCurrentUser((prev) => ({
+        ...prev,
+        faceEnrolled: true,
+        facePhotoUrl: photoUrl,
+        faceDescriptor: descriptor,
+        faceEnrolledAt: enrolledTime,
+      }));
+    }
+    addAuditEntry(
+      'UPDATE',
+      'FaceBiometric',
+      `Registered biometric facial recognition descriptor for ${employeeId}`
+    );
+  };
+
   // Check in
   const handleCheckIn = (record: AttendanceRecord) => {
     setAttendance((prev) => [record, ...prev]);
@@ -536,6 +568,7 @@ export default function App() {
               onAddEmployee={handleAddEmployee}
               onUpdateEmployee={handleUpdateEmployee}
               onBatchImportEmployees={handleBatchImport}
+              onEnrollFace={handleEnrollFace}
             />
           )}
 
@@ -549,6 +582,7 @@ export default function App() {
               onCheckOut={handleCheckOut}
               onRequestCorrection={handleRequestCorrection}
               onApproveCorrection={handleApproveCorrection}
+              onEnrollFace={handleEnrollFace}
             />
           )}
 

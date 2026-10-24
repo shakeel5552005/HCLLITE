@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserRole, Employee, AttendanceRecord, LeaveRequest } from '../types';
 import { validateEmployeeCsv, CsvValidationResult } from '../utils/rules';
+import { FaceEnrollmentModal } from './FaceEnrollmentModal';
 import {
   Users,
   Search,
@@ -17,6 +18,9 @@ import {
   Lock,
   Edit2,
   DollarSign,
+  Camera,
+  Scan,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface EmployeeModuleProps {
@@ -29,6 +33,7 @@ interface EmployeeModuleProps {
   onAddEmployee: (employee: Employee) => void;
   onUpdateEmployee: (employee: Employee) => void;
   onBatchImportEmployees: (employees: Employee[]) => void;
+  onEnrollFace?: (employeeId: string, photoUrl: string, descriptor: string) => void;
 }
 
 export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
@@ -41,6 +46,7 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
   onAddEmployee,
   onUpdateEmployee,
   onBatchImportEmployees,
+  onEnrollFace,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('All');
@@ -50,6 +56,7 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
   const [selected360Employee, setSelected360Employee] = useState<Employee | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCsvModal, setShowCsvModal] = useState(false);
+  const [enrollingEmployee, setEnrollingEmployee] = useState<Employee | null>(null);
 
   // Self-profile edit state for Employee
   const [isEditingSelf, setIsEditingSelf] = useState(false);
@@ -70,6 +77,8 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
   const [joiningDate, setJoiningDate] = useState(new Date().toISOString().split('T')[0]);
   const [phone, setPhone] = useState('+92 300 1234567');
   const [address, setAddress] = useState('Karachi, Pakistan');
+  const [newFacePhoto, setNewFacePhoto] = useState<string | null>(null);
+  const [newFaceDescriptor, setNewFaceDescriptor] = useState<string | null>(null);
 
   // Filtered employees list
   const filteredEmployees = employees.filter((emp) => {
@@ -103,6 +112,10 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
       address,
       status: 'Active',
       firstLogin: true, // Requires password change on first sign-in
+      faceEnrolled: !!newFacePhoto,
+      facePhotoUrl: newFacePhoto || undefined,
+      faceDescriptor: newFaceDescriptor || (newFacePhoto ? `BIO-SHA256-${newId}-KEY9` : undefined),
+      faceEnrolledAt: newFacePhoto ? new Date().toLocaleString() : undefined,
     };
 
     onAddEmployee(newEmp);
@@ -110,6 +123,8 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
     // Reset fields
     setName('');
     setEmail('');
+    setNewFacePhoto(null);
+    setNewFaceDescriptor(null);
   };
 
   // CSV Dry Run Test
@@ -263,6 +278,7 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
                 <th className="py-3 px-4">Department & Role</th>
                 <th className="py-3 px-4">Joining Date</th>
                 {role !== 'Employee' && <th className="py-3 px-4">Basic Salary</th>}
+                <th className="py-3 px-4">Face Biometric</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -270,7 +286,7 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
             <tbody className="divide-y divide-slate-800/60 text-slate-200">
               {filteredEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                  <td colSpan={7} className="py-8 text-center text-slate-500">
                     No employees matched the criteria.
                   </td>
                 </tr>
@@ -283,9 +299,17 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
                     <tr key={emp.employeeId} className="hover:bg-slate-800/40 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500/30 to-purple-500/30 border border-slate-700 flex items-center justify-center font-bold text-xs text-teal-300">
-                            {emp.name.charAt(0)}
-                          </div>
+                          {emp.facePhotoUrl ? (
+                            <img
+                              src={emp.facePhotoUrl}
+                              alt={emp.name}
+                              className="w-8 h-8 rounded-full object-cover border border-emerald-500/50 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500/30 to-purple-500/30 border border-slate-700 flex items-center justify-center font-bold text-xs text-teal-300 shrink-0">
+                              {emp.name.charAt(0)}
+                            </div>
+                          )}
                           <div>
                             <div className="font-semibold text-slate-100 flex items-center gap-1.5">
                               {emp.name}
@@ -314,6 +338,23 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
                           {canViewSalary ? `PKR ${emp.basicSalary.toLocaleString()}` : '••••••••'}
                         </td>
                       )}
+
+                      <td className="py-3 px-4">
+                        {emp.faceEnrolled ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/80">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Enrolled
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setEnrollingEmployee(emp)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-amber-950/50 hover:bg-amber-900/70 text-amber-300 border border-amber-800/80 transition-colors"
+                            title="Register employee face"
+                          >
+                            <Camera className="w-3 h-3 text-amber-400" /> Enroll Face
+                          </button>
+                        )}
+                      </td>
 
                       <td className="py-3 px-4">
                         <span
@@ -439,6 +480,73 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Facial Biometric Recognition Profile */}
+              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-teal-400" /> Biometric Face Profile
+                  </h4>
+                  {selected360Employee.faceEnrolled ? (
+                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-800/80 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Enrolled
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-950 px-2 py-0.5 rounded-full border border-amber-800/80">
+                      Not Enrolled
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {selected360Employee.facePhotoUrl ? (
+                    <img
+                      src={selected360Employee.facePhotoUrl}
+                      alt={selected360Employee.name}
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-500/50 shadow-md shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-slate-500 shrink-0">
+                      <Camera className="w-6 h-6 mb-1 text-slate-600" />
+                      <span className="text-[9px]">No Photo</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1 flex-1 text-xs">
+                    {selected360Employee.faceEnrolled ? (
+                      <>
+                        <div className="text-[11px] text-slate-300">
+                          <span className="text-slate-500">Enrolled At: </span>
+                          <span className="font-mono text-slate-300">
+                            {selected360Employee.faceEnrolledAt || 'Initial Setup'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-400 truncate max-w-[240px]">
+                          <span className="text-slate-500">Vector: </span>
+                          {selected360Employee.faceDescriptor || 'SHA256-EMB-DEFAULT'}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-[11px] text-slate-400">
+                        No biometric face descriptor registered for camera attendance matching.
+                      </p>
+                    )}
+
+                    {(role === 'Admin' ||
+                      role === 'HR' ||
+                      selected360Employee.employeeId === currentUser.employeeId) && (
+                      <button
+                        type="button"
+                        onClick={() => setEnrollingEmployee(selected360Employee)}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-slate-950 shadow transition-all"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        {selected360Employee.faceEnrolled ? 'Update / Retake Face' : 'Enroll Face Now'}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Salary Structure (Section 3 formula: Gross = 1.5x basic) */}
@@ -655,6 +763,75 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
                 </div>
               </div>
 
+              {/* Face Biometric Enrollment Option during registration */}
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-teal-400" /> Biometric Face Registration (Optional)
+                  </label>
+                  {newFacePhoto && (
+                    <span className="text-[10px] text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-800">
+                      Face Captured
+                    </span>
+                  )}
+                </div>
+                {newFacePhoto ? (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={newFacePhoto}
+                      alt="Enrolled Face"
+                      className="w-12 h-12 rounded-lg object-cover border border-emerald-500/50"
+                    />
+                    <div className="flex-1">
+                      <p className="text-[11px] text-emerald-300 font-medium">Biometric Face Vector Ready</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewFacePhoto(null);
+                          setNewFaceDescriptor(null);
+                        }}
+                        className="text-[10px] text-rose-400 hover:underline mt-0.5"
+                      >
+                        Remove Face Photo
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sample =
+                          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+                        setNewFacePhoto(sample);
+                        setNewFaceDescriptor(`BIO-VEC-${Date.now()}`);
+                      }}
+                      className="flex-1 py-1.5 px-2.5 bg-slate-900 hover:bg-slate-800 text-teal-300 text-xs rounded-lg border border-slate-700 flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Camera className="w-3.5 h-3.5" /> Sample / Snapshot
+                    </button>
+                    <label className="flex-1 py-1.5 px-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded-lg border border-slate-700 flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                      <Camera className="w-3.5 h-3.5 text-slate-400" /> Upload Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            setNewFacePhoto(ev.target?.result as string);
+                            setNewFaceDescriptor(`BIO-UPLOAD-${Date.now()}`);
+                          };
+                          reader.readAsDataURL(f);
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
               <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
                 <p className="font-semibold text-teal-300 flex items-center gap-1">
                   <Lock className="w-3.5 h-3.5 text-teal-400" /> Automatic Login Provisioning:
@@ -813,6 +990,45 @@ export const EmployeeModule: React.FC<EmployeeModuleProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* BIOMETRIC FACE ENROLLMENT MODAL */}
+      {enrollingEmployee && (
+        <FaceEnrollmentModal
+          employee={enrollingEmployee}
+          isOpen={!!enrollingEmployee}
+          onClose={() => setEnrollingEmployee(null)}
+          onEnrollFace={(empId, photoUrl, descriptor) => {
+            if (onEnrollFace) {
+              onEnrollFace(empId, photoUrl, descriptor);
+            } else {
+              const target = employees.find((e) => e.employeeId === empId);
+              if (target) {
+                onUpdateEmployee({
+                  ...target,
+                  faceEnrolled: true,
+                  facePhotoUrl: photoUrl,
+                  faceDescriptor: descriptor,
+                  faceEnrolledAt: new Date().toLocaleString(),
+                });
+              }
+            }
+            if (selected360Employee && selected360Employee.employeeId === empId) {
+              setSelected360Employee((prev: Employee | null) =>
+                prev
+                  ? {
+                      ...prev,
+                      faceEnrolled: true,
+                      facePhotoUrl: photoUrl,
+                      faceDescriptor: descriptor,
+                      faceEnrolledAt: new Date().toLocaleString(),
+                    }
+                  : null
+              );
+            }
+            setEnrollingEmployee(null);
+          }}
+        />
       )}
     </div>
   );

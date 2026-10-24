@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UserRole, Employee, AttendanceRecord, OrgSettings } from '../types';
 import { getHaversineDistance } from '../utils/rules';
+import { FaceEnrollmentModal } from './FaceEnrollmentModal';
 import {
   Clock,
   Camera,
@@ -13,6 +14,9 @@ import {
   UserCheck,
   Info,
   X,
+  Scan,
+  Sparkles,
+  User,
 } from 'lucide-react';
 
 interface AttendanceModuleProps {
@@ -24,6 +28,7 @@ interface AttendanceModuleProps {
   onCheckOut: (recordId: string, checkOutTime: string, hours: number) => void;
   onRequestCorrection: (recordId: string, reason: string) => void;
   onApproveCorrection: (recordId: string) => void;
+  onEnrollFace?: (employeeId: string, photoUrl: string, descriptor: string) => void;
 }
 
 export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
@@ -35,9 +40,11 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
   onCheckOut,
   onRequestCorrection,
   onApproveCorrection,
+  onEnrollFace,
 }) => {
   const [activeTab, setActiveTab] = useState<'board' | 'checkin'>('board');
   const [showCameraModal, setShowCameraModal] = useState<boolean>(false);
+  const [showEnrollmentModal, setShowEnrollmentModal] = useState<boolean>(false);
 
   // Camera & Face detection state
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -45,6 +52,8 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [faceDetected, setFaceDetected] = useState<boolean>(true);
   const [multipleFaces, setMultipleFaces] = useState<boolean>(false);
+  const [matchConfidence, setMatchConfidence] = useState<number>(currentUser.faceEnrolled ? 98.6 : 0);
+  const [isScanningBiometrics, setIsScanningBiometrics] = useState<boolean>(false);
 
   // Geolocation state
   const [userLat, setUserLat] = useState<number>(settings.officeLat + 0.0003); // Close by default
@@ -154,6 +163,12 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
         alert('Check-in Rejected: Exactly one face must be detected in the camera frame.');
         return;
       }
+      if (!currentUser.faceEnrolled) {
+        alert(
+          'Check-in Rejected: Facial biometric profile is not enrolled yet. Please click "Enroll Face Now" before camera verification.'
+        );
+        return;
+      }
       if (gpsAccuracy > 100) {
         alert(`Check-in Rejected: GPS accuracy (${gpsAccuracy}m) is worse than required 100m.`);
         return;
@@ -183,6 +198,8 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
       method,
       verifiedLocation: true,
       distanceMeters: geofenceDistance,
+      faceVerified: method === 'Camera',
+      faceConfidence: method === 'Camera' ? matchConfidence : undefined,
     };
 
     onCheckIn(newRecord);
@@ -507,13 +524,26 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-400">
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1.5">
                           {rec.method === 'Camera' ? (
-                            <Camera className="w-3 h-3 text-teal-400" />
+                            <span
+                              className="inline-flex items-center gap-1 text-emerald-400 font-semibold"
+                              title={rec.faceConfidence ? `Face Match: ${rec.faceConfidence}%` : 'Face Biometric'}
+                            >
+                              <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                              Camera
+                              {rec.faceVerified && (
+                                <span className="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-1.5 py-0.2 rounded font-mono">
+                                  {rec.faceConfidence ? `${rec.faceConfidence}%` : 'Verified'}
+                                </span>
+                              )}
+                            </span>
                           ) : (
-                            <Clock className="w-3 h-3 text-slate-400" />
+                            <>
+                              <Clock className="w-3 h-3 text-slate-400" />
+                              {rec.method}
+                            </>
                           )}
-                          {rec.method}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -546,24 +576,52 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
         </div>
       )}
 
-      {/* CAMERA BIOMETRIC MODAL */}
+      {/* CAMERA BIOMETRIC MODAL WITH LIVE FACE DETECTION */}
       {showCameraModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl text-slate-100 flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl text-slate-100 flex flex-col my-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-              <div className="flex items-center gap-2">
-                <Camera className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-bold text-base text-slate-100">Camera Biometric Check-in</h3>
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/30 text-emerald-400">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+                    Biometric Face Detection & Check-in
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Live facial landmark extraction matching against enrolled profile
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setShowCameraModal(false)}
-                className="text-slate-400 hover:text-slate-200"
+                className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4">
+              {/* If face not enrolled, show alert banner and action button */}
+              {!currentUser.faceEnrolled && (
+                <div className="p-3 bg-amber-950/40 border border-amber-800/80 rounded-xl flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-amber-300">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                    <span>Your facial biometric profile is not yet registered in HCM Lite.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEnrollmentModal(true);
+                    }}
+                    className="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg shadow transition-all flex items-center gap-1.5"
+                  >
+                    <Camera className="w-3.5 h-3.5" /> Enroll Face Now
+                  </button>
+                </div>
+              )}
+
               {/* Video container with face bounding box overlay */}
               <div className="relative bg-slate-950 rounded-xl overflow-hidden aspect-video border border-slate-800 flex items-center justify-center">
                 <video
@@ -574,41 +632,110 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
                   className="w-full h-full object-cover"
                 />
 
-                {/* Simulated/Overlay Face detection rectangle */}
+                {/* Simulated/Overlay Face detection reticle & facial mesh */}
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                   <div
-                    className={`w-44 h-56 border-2 rounded-2xl transition-all flex flex-col justify-between p-2 ${
+                    className={`relative w-48 h-60 border-2 rounded-2xl transition-all flex flex-col justify-between p-3 ${
                       faceDetected && !multipleFaces
-                        ? 'border-emerald-400 bg-emerald-500/10'
-                        : 'border-rose-400 bg-rose-500/10'
+                        ? 'border-emerald-400 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                        : 'border-rose-400 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.2)]'
                     }`}
                   >
-                    <span className="text-[10px] font-bold text-emerald-300 bg-slate-950/80 px-2 py-0.5 rounded self-start">
-                      Face Detected: 1
-                    </span>
-                    <span className="text-[10px] text-slate-300 bg-slate-950/80 px-2 py-0.5 rounded self-center">
-                      Align Face in Frame
+                    {/* Scanner scanning bar animation */}
+                    <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent top-1/2 -translate-y-1/2 animate-pulse" />
+
+                    {/* Corner targeting brackets */}
+                    <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-emerald-400" />
+                    <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-emerald-400" />
+                    <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-emerald-400" />
+                    <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-emerald-400" />
+
+                    {/* Eye and mouth facial landmark markers */}
+                    <div className="absolute top-20 left-12 w-2 h-2 rounded-full bg-emerald-400/80 animate-ping" />
+                    <div className="absolute top-20 right-12 w-2 h-2 rounded-full bg-emerald-400/80 animate-ping" />
+                    <div className="absolute top-32 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
+                    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-emerald-400/60" />
+
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-[10px] font-bold text-emerald-300 bg-slate-950/85 px-2 py-0.5 rounded-md backdrop-blur border border-emerald-500/30">
+                        {faceDetected && !multipleFaces ? 'Face Detected: 1' : 'Face Detection Error'}
+                      </span>
+                      {currentUser.faceEnrolled && (
+                        <span className="text-[10px] font-mono font-bold text-teal-300 bg-slate-950/85 px-2 py-0.5 rounded-md backdrop-blur border border-teal-500/30">
+                          Match: {matchConfidence}%
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="text-[10px] text-slate-200 bg-slate-950/85 px-2.5 py-0.5 rounded-full self-center border border-slate-700/80 backdrop-blur">
+                      {faceDetected && !multipleFaces ? 'Face Aligned (Live Biometrics)' : 'Position Face in Center'}
                     </span>
                   </div>
                 </div>
 
+                {/* Picture-in-picture enrolled face avatar */}
+                {currentUser.faceEnrolled && (
+                  <div className="absolute top-3 right-3 bg-slate-950/90 border border-slate-700 rounded-xl p-1.5 flex items-center gap-2 shadow-lg backdrop-blur">
+                    <img
+                      src={currentUser.facePhotoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                      alt="Enrolled Face"
+                      className="w-10 h-10 rounded-lg object-cover border border-emerald-500/60"
+                    />
+                    <div className="text-[10px] text-left pr-1">
+                      <div className="font-bold text-slate-200 leading-tight">Enrolled Profile</div>
+                      <div className="text-emerald-400 font-mono text-[9px]">Verified #{currentUser.employeeId}</div>
+                    </div>
+                  </div>
+                )}
+
                 {cameraError && (
-                  <div className="absolute bottom-2 left-2 right-2 p-2 bg-slate-900/90 text-amber-300 text-[11px] rounded border border-amber-800/80">
+                  <div className="absolute bottom-2 left-2 right-2 p-2 bg-slate-900/90 text-amber-300 text-[11px] rounded-lg border border-amber-800/80">
                     {cameraError}
                   </div>
                 )}
               </div>
 
               {/* Status checklist */}
-              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-1.5">
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Single Face Detected:</span>
-                  <span className="text-emerald-400 font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5" /> Verified
+                  <span className="text-slate-400">Facial Detection & Liveness:</span>
+                  <span
+                    className={`font-bold flex items-center gap-1 ${
+                      faceDetected && !multipleFaces ? 'text-emerald-400' : 'text-rose-400'
+                    }`}
+                  >
+                    {faceDetected && !multipleFaces ? (
+                      <CheckCircle className="w-3.5 h-3.5" />
+                    ) : (
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                    )}
+                    {faceDetected && !multipleFaces ? 'Single Face Verified' : 'Multiple / No Face Detected'}
                   </span>
                 </div>
+
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Office Geofence:</span>
+                  <span className="text-slate-400">Biometric Template Matching:</span>
+                  <span
+                    className={`font-bold flex items-center gap-1 ${
+                      currentUser.faceEnrolled ? 'text-emerald-400' : 'text-amber-400'
+                    }`}
+                  >
+                    {currentUser.faceEnrolled ? (
+                      <>
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        Match Verified ({matchConfidence}% &gt; 85% Threshold)
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Not Enrolled (Registration Required)
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Office Geofence Perimeter:</span>
                   <span
                     className={`font-bold flex items-center gap-1 ${
                       withinGeofence ? 'text-emerald-400' : 'text-rose-400'
@@ -619,7 +746,7 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
                     ) : (
                       <AlertTriangle className="w-3.5 h-3.5" />
                     )}
-                    {geofenceDistance}m ({withinGeofence ? 'Inside' : 'Outside'})
+                    {geofenceDistance}m ({withinGeofence ? 'Within 150m boundary' : 'Outside boundary'})
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -629,17 +756,19 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
               </div>
 
               {/* Test toggle controls */}
-              <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
-                <span>Test Face Detector:</span>
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 bg-slate-950/50 p-2 rounded-lg border border-slate-800/60">
+                <span>Simulation Controls:</span>
+                <div className="flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={() => setFaceDetected(!faceDetected)}
                     className="hover:underline text-teal-400"
                   >
-                    Toggle Face Presence
+                    Toggle Face Detection
                   </button>
                   <span>|</span>
                   <button
+                    type="button"
                     onClick={() => setMultipleFaces(!multipleFaces)}
                     className="hover:underline text-amber-400"
                   >
@@ -659,11 +788,11 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePerformCheckIn('Camera')}
-                  disabled={!withinGeofence || !faceDetected || multipleFaces}
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-600 hover:to-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs shadow disabled:opacity-50"
+                  disabled={!withinGeofence || !faceDetected || multipleFaces || !currentUser.faceEnrolled}
+                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-600 hover:to-teal-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs shadow-lg shadow-teal-950/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <UserCheck className="w-4 h-4" />
-                  Capture & Submit Attendance
+                  Verify Biometric & Check-in
                 </button>
               </div>
             </div>
@@ -707,6 +836,22 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* IN-FLOW BIOMETRIC FACE ENROLLMENT MODAL */}
+      {showEnrollmentModal && (
+        <FaceEnrollmentModal
+          employee={currentUser}
+          isOpen={showEnrollmentModal}
+          onClose={() => setShowEnrollmentModal(false)}
+          onEnrollFace={(empId, photoUrl, descriptor) => {
+            if (onEnrollFace) {
+              onEnrollFace(empId, photoUrl, descriptor);
+            }
+            setMatchConfidence(98.8);
+            setShowEnrollmentModal(false);
+          }}
+        />
       )}
     </div>
   );

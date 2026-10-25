@@ -39,7 +39,7 @@ st.markdown("""
     :root {
         --bg-0:#060a13; --bg-1:#0a1020; --bg-2:#0e1626; --bg-3:#131e33;
         --border:#1e293b; --border-2:#243447;
-        --text-1:#f1f5f9; --text-2:#94a3b8; --text-3:#64748b;
+        --text-1:#ffffff; --text-2:#94a3b8; --text-3:#64748b;
         --teal:#14b8a6; --teal-lt:#5eead4; --teal-dk:#0f766e;
         --cyan:#06b6d4; --amber:#f59e0b; --rose:#f43f5e;
         --emerald:#10b981; --violet:#8b5cf6;

@@ -150,7 +150,7 @@ st.markdown("""
         border-radius: 10px !important;
     }
     .stTextInput input:focus, .stTextArea textarea:focus {
-        border-color: var(--teal) !important;
+        border-color: var(--text-1) !important;
         box-shadow: 0 0 0 3px rgba(20,184,166,0.15) !important;
     }
 

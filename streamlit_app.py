@@ -328,8 +328,8 @@ if not st.session_state.get("is_logged_in", False):
     col_l, col_m, col_r = st.columns([1, 2.5, 1])
     with col_m:
         st.markdown("""
-        <div style="background:#0e1626; border:1px solid #1e293b; border-radius:16px; padding:24px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);">
-        <h2>Login Panel</h2>""", unsafe_allow_html=True)
+        <div style="background:#c2a3fc; border:1px solid #1e293b; border-radius:16px; padding:24px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);">
+        <h4>Login Panel</h4>""", unsafe_allow_html=True)
         
         tab_admin, tab_hr, tab_emp = st.tabs(["🛡️ Admin Portal", "👥 HR Operations", "💼 Employee Portal"])
 

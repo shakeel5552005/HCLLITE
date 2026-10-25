@@ -611,7 +611,6 @@ if not st.session_state.get("is_logged_in", False):
 
     col_l, col_m, col_r = st.columns([1, 2.6, 1])
     with col_m:
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
         st.markdown("#### 🔐 Login Panel")
         tab_admin, tab_hr, tab_emp = st.tabs(["🛡️ Admin Portal", "👥 HR Operations", "💼 Employee Portal"])
 

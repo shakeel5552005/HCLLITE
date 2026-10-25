@@ -144,8 +144,9 @@ st.markdown("""
     .stTextInput input, .stNumberInput input, .stTextArea textarea,
     .stDateInput input, .stTimeInput input {
         background: var(--bg-2) !important;
+        border-color: var(--border-2) !important;
         color: var(--text-1) !important;
-        color: var(--teal) !important;
+        color: var(--white) !important;
         border-radius: 10px !important;
     }
     .stTextInput input:focus, .stTextArea textarea:focus {

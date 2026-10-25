@@ -33,16 +33,18 @@ st.set_page_config(
 DATA_FILE = "hcm_data.json"
 
 # ----------------- GLOBAL STYLING -----------------
+# ----------------- GLOBAL STYLING -----------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     :root {
         --bg-0:#060a13; --bg-1:#0a1020; --bg-2:#0e1626; --bg-3:#131e33;
         --border:#1e293b; --border-2:#243447;
-        --text-1:#ffffff; --text-2:#94a3b8; --text-3:#64748b;
+        --text-1:#f1f5f9; --text-2:#94a3b8; --text-3:#64748b;
         --teal:#14b8a6; --teal-lt:#5eead4; --teal-dk:#0f766e;
         --cyan:#06b6d4; --amber:#f59e0b; --rose:#f43f5e;
         --emerald:#10b981; --violet:#8b5cf6;
+        --white:#ffffff;
     }
     html, body, [class*="css"], .stApp {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
@@ -109,12 +111,21 @@ st.markdown("""
     .badge-hr    { background: rgba(20,184,166,0.14); color: var(--teal-lt); border-color: rgba(20,184,166,0.4); }
     .badge-emp   { background: rgba(245,158,11,0.14); color: #fcd34d; border-color: rgba(245,158,11,0.4); }
 
+    /* ===== Sidebar ===== */
     section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #060a13 0%, #0a1020 100%);
         border-right: 1px solid var(--border);
     }
     section[data-testid="stSidebar"] .stRadio label,
     section[data-testid="stSidebar"] .stButton button { color: var(--text-1) !important; }
+    /* Radio button circles visible */
+    section[data-testid="stSidebar"] div[data-baseweb="radio"] > div:first-child {
+        background-color: #1e293b !important;
+        border-color: #475569 !important;
+    }
+    section[data-testid="stSidebar"] div[data-baseweb="radio"] > div:first-child > div {
+        background-color: #14b8a6 !important;
+    }
     .sidebar-profile {
         background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 100%);
         border: 1px solid var(--border); border-radius: 14px; padding: 14px;
@@ -132,6 +143,7 @@ st.markdown("""
         font-weight: 800; color: #022c22; font-size: 15px; flex-shrink: 0;
     }
 
+    /* ===== Buttons ===== */
     .stButton > button { border-radius: 10px !important; font-weight: 600 !important; transition: all .15s ease !important; border: 1px solid var(--border-2) !important; }
     .stButton > button[kind="primary"] {
         background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%) !important;
@@ -141,76 +153,154 @@ st.markdown("""
     .stButton > button[kind="primary"]:hover { transform: translateY(-1px); }
     .stButton > button:hover { border-color: var(--teal) !important; }
 
-    .stTextInput input, .stNumberInput input, .stTextArea textarea,
-    .stDateInput input, .stTimeInput input {
-        background: var(--bg-0) !important;
-        border-color: var(--border-2) !important;
-        color: var(--text-1) !important;
+    /* ============= INPUTS, TEXTAREA, NUMBER ============= */
+    .stTextInput input,
+    .stNumberInput input,
+    .stTextArea textarea,
+    .stDateInput input,
+    .stTimeInput input,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    textarea {
+        background-color: var(--bg-2) !important;
         color: var(--white) !important;
+        border: 1px solid var(--border-2) !important;
         border-radius: 10px !important;
+        caret-color: var(--teal-lt) !important;
+        font-size: 14px !important;
     }
-    .stTextInput input:focus, .stTextArea textarea:focus {
-        background: var(--bg-0) !important;
-        border-color: var(--text-1) !important;
-        color: var(--text-1) !important;
-        box-shadow: 0 0 0 3px rgba(20,184,166,0.15) !important;
+    input::placeholder,
+    textarea::placeholder {
+        color: #64748b !important;
+        opacity: 1 !important;
     }
+    .stTextInput input:focus,
+    .stTextArea textarea:focus,
+    .stNumberInput input:focus,
+    .stDateInput input:focus,
+    .stTimeInput input:focus {
+        border-color: var(--teal) !important;
+        box-shadow: 0 0 0 3px rgba(20,184,166,0.20) !important;
+        outline: none !important;
+        color: var(--white) !important;
+    }
+    /* Number input +/- steppers */
+    div[data-testid="stNumberInput"] button {
+        background-color: #1e293b !important;
+        color: var(--white) !important;
+        border: 1px solid var(--border-2) !important;
+    }
+    div[data-testid="stNumberInput"] button:hover {
+        background-color: var(--teal) !important;
+        color: #022c22 !important;
+    }
+    div[data-testid="stNumberInput"] button svg { fill: currentColor !important; }
 
-    /* DROPDOWN FIX */
+    /* ============= SELECTBOX — CLOSED STATE ============= */
     div[data-baseweb="select"] > div {
-        background-color: var(--bg-0) !important;
-        color: var(--text-1) !important;
-        border-color: var(--border-2) !important;
-        border-radius: 10px !important;
-    }
-    div[data-baseweb="select"] span,
-    div[data-baseweb="select"] input,
-    div[data-baseweb="select"] div[aria-selected] {
-        color: var(--text-1) !important;
-        background-color: transparent !important;
-    }
-    div[data-baseweb="popover"],
-    div[data-baseweb="popover"] > div,
-    ul[data-baseweb="menu"] {
-        background-color: var(--bg-3) !important;
+        background-color: var(--bg-2) !important;
+        color: var(--white) !important;
         border: 1px solid var(--border-2) !important;
         border-radius: 10px !important;
     }
+    div[data-baseweb="select"] > div:hover { border-color: var(--teal) !important; }
+    div[data-baseweb="select"] > div > div,
+    div[data-baseweb="select"] > div > div > div {
+        background-color: transparent !important;
+        color: var(--white) !important;
+    }
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] input,
+    div[data-baseweb="select"] div[aria-selected],
+    div[data-baseweb="select"] div[role="button"] {
+        color: var(--white) !important;
+        background-color: transparent !important;
+    }
+    div[data-baseweb="select"] svg {
+        fill: var(--text-2) !important;
+        color: var(--text-2) !important;
+    }
+
+    /* ============= SELECTBOX — DROPDOWN MENU (portal) ============= */
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div {
+        background-color: var(--bg-3) !important;
+        border: 1px solid var(--border-2) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
+    }
+    ul[data-baseweb="menu"] {
+        background-color: var(--bg-3) !important;
+        padding: 4px !important;
+        border: none !important;
+    }
     ul[data-baseweb="menu"] li,
     li[role="option"] {
-        background-color: var(--bg-3) !important;
-        color: var(--text-1) !important;
-        padding: 9px 13px !important;
+        background-color: transparent !important;
+        color: var(--white) !important;
+        padding: 10px 14px !important;
         font-size: 13.5px !important;
+        border-radius: 6px !important;
+        cursor: pointer !important;
     }
     ul[data-baseweb="menu"] li:hover,
     li[role="option"]:hover,
     li[role="option"][aria-selected="true"] {
-        background-color: rgba(20,184,166,0.18) !important;
-        color: var(--teal-lt) !important;
-    }
-    span[data-baseweb="tag"] {
         background-color: rgba(20,184,166,0.22) !important;
         color: var(--teal-lt) !important;
     }
 
+    /* ============= MULTISELECT TAGS ============= */
+    span[data-baseweb="tag"] {
+        background-color: rgba(20,184,166,0.22) !important;
+        color: var(--teal-lt) !important;
+        border: 1px solid rgba(20,184,166,0.4) !important;
+    }
+    span[data-baseweb="tag"] span { color: var(--teal-lt) !important; }
+    span[data-baseweb="tag"] svg { fill: var(--teal-lt) !important; }
+
+    /* ============= DATE PICKER POPUP ============= */
+    div[data-baseweb="calendar"],
+    div[data-baseweb="calendar"] > div {
+        background-color: var(--bg-3) !important;
+        color: var(--white) !important;
+        border-color: var(--border-2) !important;
+    }
+    div[data-baseweb="calendar"] button {
+        color: var(--white) !important;
+        background-color: transparent !important;
+    }
+    div[data-baseweb="calendar"] button:hover {
+        background-color: rgba(20,184,166,0.22) !important;
+    }
+    div[data-baseweb="calendar"] [aria-selected="true"] {
+        background-color: var(--teal) !important;
+        color: #022c22 !important;
+    }
+
+    /* ============= TABS ============= */
     .stTabs [data-baseweb="tab-list"] { gap: 4px; }
-    .stTabs [data-baseweb="tab"] { border-radius: 10px 10px 0 0; padding: 10px 18px; font-weight: 600; }
+    .stTabs [data-baseweb="tab"] { border-radius: 10px 10px 0 0; padding: 10px 18px; font-weight: 600; color: var(--text-2) !important; }
     .stTabs [aria-selected="true"] { background: rgba(20,184,166,0.12) !important; color: var(--teal-lt) !important; }
 
+    /* ============= DATAFRAME & METRIC ============= */
     div[data-testid="stDataFrame"] { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
     div[data-testid="stMetric"] { background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
     div[data-testid="stMetricValue"] { color: var(--text-1) !important; font-weight: 800 !important; }
     div[data-testid="stMetricLabel"] { color: var(--text-2) !important; }
 
+    /* ============= PAYSLIP ============= */
     .payslip-box {
         background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
         border: 1px solid var(--border-2); border-radius: 16px; padding: 26px 28px;
         box-shadow: 0 20px 40px -22px rgba(0,0,0,0.7);
     }
     .ps-label { color: var(--text-2); font-size: 13px; }
-    .ps-val   { text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .ps-val   { text-align: right; font-size: 13px; color: var(--white); font-variant-numeric: tabular-nums; }
 
+    /* ============= LOGIN CARD ============= */
     .login-card {
         background: linear-gradient(180deg, rgba(14,22,38,0.95) 0%, rgba(10,16,32,0.95) 100%),
                     radial-gradient(400px 200px at 100% 0%, rgba(20,184,166,0.14), transparent 70%);
@@ -231,7 +321,6 @@ st.markdown("""
     div[data-testid="stAlert"] { border-radius: 12px !important; border: 1px solid var(--border-2) !important; background: var(--bg-2) !important; }
 </style>
 """, unsafe_allow_html=True)
-
 # ----------------- FACE HELPERS -----------------
 @st.cache_resource
 def _load_face_cascade():

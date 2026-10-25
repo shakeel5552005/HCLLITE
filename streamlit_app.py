@@ -1,7 +1,7 @@
 """
 Saylani Hackathon 2026 — HCM Lite
 AI-Assisted Human Capital Management System
-Dark Theme · Real Face Detection (OpenCV) · Persistent JSON Storage (main directory)
+Light Theme · Real Face Detection (OpenCV) · Persistent JSON Storage (main directory)
 """
 
 import streamlit as st

@@ -164,8 +164,8 @@ st.markdown("""
     input[type="password"],
     input[type="number"],
     textarea {
-        background-color: var(--bg-2) !important;
-        color: var(--white) !important;
+        background-color: var(--bg-0) !important;
+        color: var(--text-1) !important;
         border: 1px solid var(--border-2) !important;
         border-radius: 10px !important;
         caret-color: var(--teal-lt) !important;

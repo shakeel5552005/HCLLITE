@@ -319,7 +319,7 @@ if not st.session_state.get("is_logged_in", False):
         <div style="display:inline-block; background:#14b8a6; padding:12px 18px; border-radius:14px; font-weight:900; font-size:24px; color:#022c22; margin-bottom:12px; box-shadow:0 4px 12px rgba(20,184,166,0.3);">HCM</div>
         <h1 style="color:#000000; font-size:2.1rem; font-weight:800; margin:0; letter-spacing:-0.02em;">Saylani Hackathon 2026</h1>
         <h3 style="color:#2b086d; font-size:1.15rem; font-weight:600; margin:6px 0 16px 0;">HCM Lite — AI-Assisted Human Capital Management</h3>
-        <p style="color:#94a3b8; font-size:0.85rem; line-height:1.5;">
+        <p style="color:#000000; font-size:0.85rem; line-height:1.5;">
             Select your designated role to enter the system. Each role operates with its own dedicated menus, database permissions, and AI assistant scope.
         </p>
     </div>
@@ -330,7 +330,7 @@ if not st.session_state.get("is_logged_in", False):
         st.markdown("""
         <div style="background:#0e1626; border:1px solid #1e293b; border-radius:16px; padding:24px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);">
         """, unsafe_allow_html=True)
-        
+        <h2>Login Panel</h2>
         tab_admin, tab_hr, tab_emp = st.tabs(["🛡️ Admin Portal", "👥 HR Operations", "💼 Employee Portal"])
 
         with tab_admin:

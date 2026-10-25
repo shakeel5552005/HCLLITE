@@ -239,7 +239,7 @@ st.markdown("""
     ul[data-baseweb="menu"] li,
     li[role="option"] {
         background-color: transparent !important;
-        color: var(--white) !important;
+        color: var(--text-1) !important;
         padding: 10px 14px !important;
         font-size: 13.5px !important;
         border-radius: 6px !important;

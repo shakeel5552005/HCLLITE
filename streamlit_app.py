@@ -143,20 +143,22 @@ st.markdown("""
 
     .stTextInput input, .stNumberInput input, .stTextArea textarea,
     .stDateInput input, .stTimeInput input {
-        background: var(--bg-2) !important;
+        background: var(--bg-0) !important;
         border-color: var(--border-2) !important;
         color: var(--text-1) !important;
         color: var(--white) !important;
         border-radius: 10px !important;
     }
     .stTextInput input:focus, .stTextArea textarea:focus {
+        background: var(--bg-0) !important;
         border-color: var(--text-1) !important;
+        color: var(--text-1) !important;
         box-shadow: 0 0 0 3px rgba(20,184,166,0.15) !important;
     }
 
     /* DROPDOWN FIX */
     div[data-baseweb="select"] > div {
-        background-color: var(--bg-2) !important;
+        background-color: var(--bg-0) !important;
         color: var(--text-1) !important;
         border-color: var(--border-2) !important;
         border-radius: 10px !important;

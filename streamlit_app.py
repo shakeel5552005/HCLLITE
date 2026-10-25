@@ -1,7 +1,7 @@
 """
 Saylani Hackathon 2026 — HCM Lite
 AI-Assisted Human Capital Management System
-Light Theme · Real Face Detection (OpenCV) · Persistent JSON Storage (main directory)
+Light Theme · Real Face Detection (OpenCV) · Persistent JSON Storage
 """
 
 import streamlit as st
@@ -13,7 +13,6 @@ import os
 import json
 import base64
 
-# --- OpenCV (optional) ---
 try:
     import cv2
     HAS_CV2 = True
@@ -21,7 +20,6 @@ except ImportError:
     HAS_CV2 = False
     cv2 = None
 
-# ----------------- PAGE CONFIG -----------------
 st.set_page_config(
     page_title="HCM Lite — Saylani Hackathon 2026",
     page_icon="🏢",
@@ -29,30 +27,44 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ----------------- PERSISTENCE (main directory) -----------------
 DATA_FILE = "hcm_data.json"
 
-# ----------------- GLOBAL STYLING -----------------
-# ----------------- GLOBAL STYLING -----------------
+# ==============================================================
+# GLOBAL STYLING — LIGHT THEME
+# ==============================================================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
     :root {
-        --bg-0:#060a13; --bg-1:#0a1020; --bg-2:#0e1626; --bg-3:#131e33;
-        --border:#1e293b; --border-2:#243447;
-        --text-1:#f1f5f9; --text-2:#94a3b8; --text-3:#64748b;
-        --teal:#14b8a6; --teal-lt:#5eead4; --teal-dk:#0f766e;
-        --cyan:#06b6d4; --amber:#f59e0b; --rose:#f43f5e;
-        --emerald:#10b981; --violet:#8b5cf6;
+        /* ===== LIGHT THEME TOKENS ===== */
+        --bg-0:#f8fafc;
+        --bg-1:#ffffff;
+        --bg-2:#ffffff;
+        --bg-3:#f1f5f9;
+        --border:#e2e8f0;
+        --border-2:#cbd5e1;
+        --text-1:#0f172a;
+        --text-2:#475569;
+        --text-3:#64748b;
         --white:#ffffff;
+        --teal:#0d9488;
+        --teal-lt:#0f766e;
+        --teal-dk:#115e59;
+        --cyan:#0891b2;
+        --amber:#d97706;
+        --rose:#dc2626;
+        --emerald:#059669;
+        --violet:#7c3aed;
     }
+
     html, body, [class*="css"], .stApp {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     }
     .stApp {
         background:
-            radial-gradient(1200px 600px at 80% -10%, rgba(20,184,166,0.10), transparent 60%),
-            radial-gradient(900px 500px at -10% 110%, rgba(6,182,212,0.08), transparent 55%),
+            radial-gradient(1200px 600px at 80% -10%, rgba(13,148,136,0.05), transparent 60%),
+            radial-gradient(900px 500px at -10% 110%, rgba(8,145,178,0.04), transparent 55%),
             var(--bg-0);
     }
     #MainMenu, footer, header { visibility: hidden; }
@@ -61,21 +73,22 @@ st.markdown("""
     h1 { font-weight: 800 !important; } h2 { font-weight: 700 !important; }
     p, span, label, div { color: var(--text-1); }
 
+    /* ===== HEADER ===== */
     .hcm-header {
-        background: linear-gradient(135deg, rgba(13,27,42,0.95) 0%, rgba(10,37,64,0.95) 55%, rgba(6,10,19,0.95) 100%),
-                    radial-gradient(circle at 90% 0%, rgba(20,184,166,0.18), transparent 55%);
-        border: 1px solid var(--border-2); border-radius: 20px; padding: 26px 30px; margin-bottom: 22px;
-        box-shadow: 0 20px 45px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.04);
+        background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+        border: 1px solid #99f6e4;
+        border-radius: 20px; padding: 26px 30px; margin-bottom: 22px;
+        box-shadow: 0 8px 24px -12px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.9);
         position: relative; overflow: hidden;
     }
     .hcm-header::before {
         content: ""; position: absolute; inset: 0;
-        background: radial-gradient(600px 200px at 100% 0%, rgba(94,234,212,0.10), transparent 70%);
+        background: radial-gradient(600px 200px at 100% 0%, rgba(13,148,136,0.08), transparent 70%);
         pointer-events: none;
     }
     .hcm-header-title {
         font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em;
-        background: linear-gradient(90deg, #ffffff 0%, #5eead4 90%);
+        background: linear-gradient(90deg, #0f172a 0%, #0f766e 90%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         margin: 0; line-height: 1.15;
     }
@@ -85,123 +98,135 @@ st.markdown("""
     }
     .hcm-subline { font-size: 0.85rem; color: var(--text-2); margin-top: 6px; }
 
+    /* ===== METRIC CARDS ===== */
     .metric-card {
-        background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+        background: #ffffff;
         border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px;
-        box-shadow: 0 6px 18px -8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
-        transition: transform .18s ease, border-color .18s ease; position: relative; overflow: hidden; height: 100%;
+        box-shadow: 0 4px 14px -8px rgba(15,23,42,0.08);
+        transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+        position: relative; overflow: hidden; height: 100%;
     }
     .metric-card::after {
         content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
         background: linear-gradient(180deg, var(--teal), var(--cyan)); opacity: 0.9;
     }
-    .metric-card:hover { border-color: var(--teal-dk); transform: translateY(-3px); }
+    .metric-card:hover {
+        border-color: var(--teal); transform: translateY(-3px);
+        box-shadow: 0 12px 24px -12px rgba(13,148,136,0.25);
+    }
     .metric-icon {
         width: 34px; height: 34px; border-radius: 10px; display: inline-flex;
         align-items: center; justify-content: center;
-        background: rgba(20,184,166,0.14); border: 1px solid rgba(20,184,166,0.35);
+        background: rgba(13,148,136,0.10); border: 1px solid rgba(13,148,136,0.25);
         font-size: 17px; margin-bottom: 10px;
     }
     .metric-label { font-size: 0.70rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-2); }
     .metric-value { font-size: 1.95rem; font-weight: 800; color: var(--text-1); margin: 2px 0 3px 0; letter-spacing: -0.02em; }
     .metric-sub { font-size: 0.75rem; color: var(--teal-lt); font-weight: 600; }
 
+    /* ===== BADGES ===== */
     .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-weight: 700; font-size: 0.72rem; border: 1px solid transparent; }
-    .badge-admin { background: rgba(139,92,246,0.14); color: #c4b5fd; border-color: rgba(139,92,246,0.4); }
-    .badge-hr    { background: rgba(20,184,166,0.14); color: var(--teal-lt); border-color: rgba(20,184,166,0.4); }
-    .badge-emp   { background: rgba(245,158,11,0.14); color: #fcd34d; border-color: rgba(245,158,11,0.4); }
+    .badge-admin { background: rgba(124,58,237,0.10); color: #6d28d9; border-color: rgba(124,58,237,0.30); }
+    .badge-hr    { background: rgba(13,148,136,0.10); color: #0f766e; border-color: rgba(13,148,136,0.30); }
+    .badge-emp   { background: rgba(217,119,6,0.10); color: #b45309; border-color: rgba(217,119,6,0.30); }
 
-    /* ===== Sidebar ===== */
+    /* ===== SIDEBAR ===== */
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #060a13 0%, #0a1020 100%);
+        background: #ffffff;
         border-right: 1px solid var(--border);
     }
     section[data-testid="stSidebar"] .stRadio label,
     section[data-testid="stSidebar"] .stButton button { color: var(--text-1) !important; }
-    /* Radio button circles visible */
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] h4,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label { color: var(--text-1) !important; }
     section[data-testid="stSidebar"] div[data-baseweb="radio"] > div:first-child {
-        background-color: #1e293b !important;
-        border-color: #475569 !important;
+        background-color: #ffffff !important;
+        border-color: #cbd5e1 !important;
     }
     section[data-testid="stSidebar"] div[data-baseweb="radio"] > div:first-child > div {
-        background-color: #14b8a6 !important;
+        background-color: #0d9488 !important;
     }
     .sidebar-profile {
-        background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 100%);
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
         border: 1px solid var(--border); border-radius: 14px; padding: 14px;
         margin-bottom: 12px; position: relative; overflow: hidden;
     }
     .sidebar-profile::before {
         content: ""; position: absolute; inset: 0;
-        background: radial-gradient(220px 80px at 100% 0%, rgba(20,184,166,0.14), transparent 70%);
+        background: radial-gradient(220px 80px at 100% 0%, rgba(13,148,136,0.06), transparent 70%);
         pointer-events: none;
     }
     .avatar {
         width: 38px; height: 38px; border-radius: 10px;
         background: linear-gradient(135deg, var(--teal), var(--cyan));
         display: flex; align-items: center; justify-content: center;
-        font-weight: 800; color: #022c22; font-size: 15px; flex-shrink: 0;
+        font-weight: 800; color: #ffffff; font-size: 15px; flex-shrink: 0;
     }
 
-    /* ===== Buttons ===== */
-    .stButton > button { border-radius: 10px !important; font-weight: 600 !important; transition: all .15s ease !important; border: 1px solid var(--border-2) !important; }
+    /* ===== BUTTONS ===== */
+    .stButton > button {
+        border-radius: 10px !important; font-weight: 600 !important;
+        transition: all .15s ease !important;
+        border: 1px solid var(--border-2) !important;
+        background: #ffffff !important;
+        color: var(--text-1) !important;
+    }
     .stButton > button[kind="primary"] {
         background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%) !important;
-        color: #022c22 !important; border: none !important; font-weight: 800 !important;
-        box-shadow: 0 8px 20px -8px rgba(20,184,166,0.55) !important;
+        color: #ffffff !important; border: none !important; font-weight: 800 !important;
+        box-shadow: 0 8px 20px -8px rgba(13,148,136,0.45) !important;
     }
-    .stButton > button[kind="primary"]:hover { transform: translateY(-1px); }
-    .stButton > button:hover { border-color: var(--teal) !important; }
+    .stButton > button[kind="primary"]:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px -8px rgba(13,148,136,0.55) !important;
+    }
+    .stButton > button:hover { border-color: var(--teal) !important; color: var(--teal-dk) !important; }
 
-    /* ============= INPUTS, TEXTAREA, NUMBER ============= */
+    /* ===== INPUTS ===== */
     .stTextInput input,
     .stNumberInput input,
     .stTextArea textarea,
     .stDateInput input,
     .stTimeInput input,
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="number"],
-    textarea {
-        background-color: var(--bg-0) !important;
+    input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea {
+        background-color: #ffffff !important;
         color: var(--text-1) !important;
         border: 1px solid var(--border-2) !important;
         border-radius: 10px !important;
-        caret-color: var(--teal-lt) !important;
+        caret-color: var(--teal) !important;
         font-size: 14px !important;
     }
-    input::placeholder,
-    textarea::placeholder {
-        color: #64748b !important;
+    input::placeholder, textarea::placeholder {
+        color: #94a3b8 !important;
         opacity: 1 !important;
     }
-    .stTextInput input:focus,
-    .stTextArea textarea:focus,
-    .stNumberInput input:focus,
-    .stDateInput input:focus,
-    .stTimeInput input:focus {
+    .stTextInput input:focus, .stTextArea textarea:focus,
+    .stNumberInput input:focus, .stDateInput input:focus, .stTimeInput input:focus {
         border-color: var(--teal) !important;
-        box-shadow: 0 0 0 3px rgba(20,184,166,0.20) !important;
+        box-shadow: 0 0 0 3px rgba(13,148,136,0.12) !important;
         outline: none !important;
-        color: var(--white) !important;
+        color: var(--text-1) !important;
     }
-    /* Number input +/- steppers */
     div[data-testid="stNumberInput"] button {
-        background-color: #1e293b !important;
-        color: var(--white) !important;
+        background-color: #f8fafc !important;
+        color: var(--text-1) !important;
         border: 1px solid var(--border-2) !important;
     }
     div[data-testid="stNumberInput"] button:hover {
         background-color: var(--teal) !important;
-        color: #022c22 !important;
+        color: #ffffff !important;
     }
     div[data-testid="stNumberInput"] button svg { fill: currentColor !important; }
 
-    /* ============= SELECTBOX — CLOSED STATE ============= */
+    /* ===== SELECTBOX ===== */
     div[data-baseweb="select"] > div {
-        background-color: var(--bg-2) !important;
-        color: var(--white) !important;
+        background-color: #ffffff !important;
+        color: var(--text-1) !important;
         border: 1px solid var(--border-2) !important;
         border-radius: 10px !important;
     }
@@ -209,13 +234,13 @@ st.markdown("""
     div[data-baseweb="select"] > div > div,
     div[data-baseweb="select"] > div > div > div {
         background-color: transparent !important;
-        color: var(--white) !important;
+        color: var(--text-1) !important;
     }
     div[data-baseweb="select"] span,
     div[data-baseweb="select"] input,
     div[data-baseweb="select"] div[aria-selected],
     div[data-baseweb="select"] div[role="button"] {
-        color: var(--white) !important;
+        color: var(--text-1) !important;
         background-color: transparent !important;
     }
     div[data-baseweb="select"] svg {
@@ -223,16 +248,16 @@ st.markdown("""
         color: var(--text-2) !important;
     }
 
-    /* ============= SELECTBOX — DROPDOWN MENU (portal) ============= */
+    /* ===== DROPDOWN MENU ===== */
     div[data-baseweb="popover"],
     div[data-baseweb="popover"] > div {
-        background-color: var(--bg-3) !important;
+        background-color: #ffffff !important;
         border: 1px solid var(--border-2) !important;
         border-radius: 10px !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
+        box-shadow: 0 10px 30px rgba(15,23,42,0.12) !important;
     }
     ul[data-baseweb="menu"] {
-        background-color: var(--bg-3) !important;
+        background-color: #ffffff !important;
         padding: 4px !important;
         border: none !important;
     }
@@ -248,79 +273,89 @@ st.markdown("""
     ul[data-baseweb="menu"] li:hover,
     li[role="option"]:hover,
     li[role="option"][aria-selected="true"] {
-        background-color: rgba(20,184,166,0.22) !important;
-        color: var(--teal-lt) !important;
+        background-color: rgba(13,148,136,0.10) !important;
+        color: var(--teal-dk) !important;
     }
 
-    /* ============= MULTISELECT TAGS ============= */
+    /* ===== MULTISELECT TAGS ===== */
     span[data-baseweb="tag"] {
-        background-color: rgba(20,184,166,0.22) !important;
-        color: var(--teal-lt) !important;
-        border: 1px solid rgba(20,184,166,0.4) !important;
+        background-color: rgba(13,148,136,0.12) !important;
+        color: var(--teal-dk) !important;
+        border: 1px solid rgba(13,148,136,0.30) !important;
     }
-    span[data-baseweb="tag"] span { color: var(--teal-lt) !important; }
-    span[data-baseweb="tag"] svg { fill: var(--teal-lt) !important; }
+    span[data-baseweb="tag"] span { color: var(--teal-dk) !important; }
+    span[data-baseweb="tag"] svg { fill: var(--teal-dk) !important; }
 
-    /* ============= DATE PICKER POPUP ============= */
+    /* ===== DATE PICKER ===== */
     div[data-baseweb="calendar"],
     div[data-baseweb="calendar"] > div {
-        background-color: var(--bg-3) !important;
-        color: var(--white) !important;
+        background-color: #ffffff !important;
+        color: var(--text-1) !important;
         border-color: var(--border-2) !important;
     }
     div[data-baseweb="calendar"] button {
-        color: var(--white) !important;
+        color: var(--text-1) !important;
         background-color: transparent !important;
     }
     div[data-baseweb="calendar"] button:hover {
-        background-color: rgba(20,184,166,0.22) !important;
+        background-color: rgba(13,148,136,0.10) !important;
     }
     div[data-baseweb="calendar"] [aria-selected="true"] {
         background-color: var(--teal) !important;
-        color: #022c22 !important;
+        color: #ffffff !important;
     }
 
-    /* ============= TABS ============= */
+    /* ===== TABS ===== */
     .stTabs [data-baseweb="tab-list"] { gap: 4px; }
-    .stTabs [data-baseweb="tab"] { border-radius: 10px 10px 0 0; padding: 10px 18px; font-weight: 600; color: var(--text-2) !important; }
-    .stTabs [aria-selected="true"] { background: rgba(20,184,166,0.12) !important; color: var(--teal-lt) !important; }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 10px 10px 0 0; padding: 10px 18px; font-weight: 600;
+        color: var(--text-2) !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background: rgba(13,148,136,0.10) !important;
+        color: var(--teal-dk) !important;
+    }
 
-    /* ============= DATAFRAME & METRIC ============= */
+    /* ===== DATAFRAME & METRIC ===== */
     div[data-testid="stDataFrame"] { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-    div[data-testid="stMetric"] { background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+    div[data-testid="stMetric"] { background: #ffffff; border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
     div[data-testid="stMetricValue"] { color: var(--text-1) !important; font-weight: 800 !important; }
     div[data-testid="stMetricLabel"] { color: var(--text-2) !important; }
 
-    /* ============= PAYSLIP ============= */
+    /* ===== PAYSLIP ===== */
     .payslip-box {
-        background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+        background: #ffffff;
         border: 1px solid var(--border-2); border-radius: 16px; padding: 26px 28px;
-        box-shadow: 0 20px 40px -22px rgba(0,0,0,0.7);
+        box-shadow: 0 8px 24px -12px rgba(15,23,42,0.10);
     }
     .ps-label { color: var(--text-2); font-size: 13px; }
-    .ps-val   { text-align: right; font-size: 13px; color: var(--white); font-variant-numeric: tabular-nums; }
+    .ps-val   { text-align: right; font-size: 13px; color: var(--text-1); font-variant-numeric: tabular-nums; }
 
-    /* ============= LOGIN CARD ============= */
+    /* ===== LOGIN CARD ===== */
     .login-card {
-        background: linear-gradient(180deg, rgba(14,22,38,0.95) 0%, rgba(10,16,32,0.95) 100%),
-                    radial-gradient(400px 200px at 100% 0%, rgba(20,184,166,0.14), transparent 70%);
+        background: #ffffff;
         border: 1px solid var(--border-2); border-radius: 20px; padding: 28px;
-        box-shadow: 0 30px 60px -30px rgba(0,0,0,0.8);
+        box-shadow: 0 20px 40px -20px rgba(15,23,42,0.15);
     }
     .login-hero { text-align: center; padding: 20px 10px 10px 10px; }
     .login-badge {
         display: inline-flex; align-items: center; justify-content: center;
         width: 62px; height: 62px; background: linear-gradient(135deg, var(--teal), var(--cyan));
-        border-radius: 18px; font-weight: 900; font-size: 22px; color: #022c22;
-        box-shadow: 0 12px 32px -8px rgba(20,184,166,0.55); margin-bottom: 16px;
+        border-radius: 18px; font-weight: 900; font-size: 22px; color: #ffffff;
+        box-shadow: 0 12px 32px -8px rgba(13,148,136,0.45); margin-bottom: 16px;
     }
-    .login-title { color: #ffffff; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
+    .login-title { color: #0f172a; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
     .login-subtitle { color: var(--teal-lt); font-size: 1.05rem; font-weight: 600; margin: 6px 0 14px 0; }
     .login-desc { color: var(--text-2); font-size: 0.85rem; line-height: 1.6; }
 
-    div[data-testid="stAlert"] { border-radius: 12px !important; border: 1px solid var(--border-2) !important; background: var(--bg-2) !important; }
+    /* ===== ALERTS ===== */
+    div[data-testid="stAlert"] {
+        border-radius: 12px !important;
+        border: 1px solid var(--border-2) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
+
 # ----------------- FACE HELPERS -----------------
 @st.cache_resource
 def _load_face_cascade():
@@ -356,7 +391,6 @@ def detect_faces_in_image(img_bytes):
     return list(faces), img
 
 def annotate_faces(img, faces):
-    """Draw teal rectangle (square box) around each detected face."""
     if img is None: return None
     annotated = img.copy()
     for (x, y, w, h) in faces:
@@ -387,7 +421,7 @@ def match_faces(face_a, face_b):
 
 FACE_MATCH_THRESHOLD = 0.60
 
-# ----------------- SAVE / LOAD (PERSISTENCE) -----------------
+# ----------------- SAVE / LOAD -----------------
 def save_data():
     try:
         data = {
@@ -635,11 +669,12 @@ selected_role = st.session_state.current_role
 _initials = "".join([p[0] for p in curr_user_name.split()][:2]).upper()
 
 with st.sidebar:
+    # Brand — light theme colors
     st.markdown("""
     <div style="display:flex; align-items:center; gap:11px; margin-bottom:16px;">
-        <div style="background: linear-gradient(135deg, #14b8a6, #06b6d4); padding:9px 13px; border-radius:11px; font-weight:900; font-size:17px; color:#022c22;">HCM</div>
+        <div style="background: linear-gradient(135deg, #0d9488, #0891b2); padding:9px 13px; border-radius:11px; font-weight:900; font-size:17px; color:#ffffff;">HCM</div>
         <div>
-            <div style="font-weight:800; font-size:16px; color:#f8fafc; line-height:1.15;">HCM Lite</div>
+            <div style="font-weight:800; font-size:16px; color:#0f172a; line-height:1.15;">HCM Lite</div>
             <div style="font-size:10.5px; color:#64748b; letter-spacing:0.05em;">SAYLANI HACKATHON 2026</div>
         </div>
     </div>
@@ -650,8 +685,8 @@ with st.sidebar:
         <div style="display:flex; align-items:center; gap:11px;">
             <div class="avatar">{_initials}</div>
             <div style="min-width:0; flex:1;">
-                <div style="font-size:13.5px; font-weight:700; color:#f8fafc;">{curr_user_name}</div>
-                <div style="font-size:11px; color:#5eead4;">{curr_user['designation'] if curr_user else selected_role}</div>
+                <div style="font-size:13.5px; font-weight:700; color:#0f172a;">{curr_user_name}</div>
+                <div style="font-size:11px; color:#0f766e;">{curr_user['designation'] if curr_user else selected_role}</div>
             </div>
         </div>
         <div style="font-size:10px; color:#64748b; margin-top:8px;">
@@ -710,7 +745,7 @@ with st.sidebar:
         st.rerun()
 
     st.markdown(f"""
-    <div style="font-size:10px; color:#475569; text-align:center; margin-top:14px; line-height:1.6;">
+    <div style="font-size:10px; color:#64748b; text-align:center; margin-top:14px; line-height:1.6;">
         HCM Lite v1.0 · 💾 Persistent<br/>
         Zaitoon Ashraf IT Park · Karachi
     </div>
@@ -719,24 +754,24 @@ with st.sidebar:
 # ----------------- HEADER -----------------
 st.markdown(f"""
 <div class="hcm-header">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; position:relative;">
         <div>
             <div class="hcm-eyebrow">Saylani Hackathon 2026 · Zaitoon Ashraf IT Park</div>
             <h1 class="hcm-header-title">{st.session_state.company_name} — HCM Lite</h1>
             <div class="hcm-subline">
-                Active Portal: <strong style="color:#5eead4;">{selected_role}</strong>
-                · Signed in as <strong style="color:#f1f5f9;">{curr_user_name}</strong>
+                Active Portal: <strong style="color:#0f766e;">{selected_role}</strong>
+                · Signed in as <strong style="color:#0f172a;">{curr_user_name}</strong>
                 <span style="color:#64748b;">({st.session_state.current_user_id})</span>
             </div>
         </div>
         <div style="display:flex; gap:9px; flex-wrap:wrap;">
-            <div style="background:rgba(20,184,166,0.10); padding:10px 16px; border-radius:12px; border:1px solid rgba(20,184,166,0.28);">
-                <div style="color:#94a3b8; font-size:9.5px; text-transform:uppercase; letter-spacing:0.09em; font-weight:700;">Office Start</div>
-                <div style="font-weight:800; color:#5eead4; font-size:13px; margin-top:2px;">{st.session_state.office_start.strftime('%H:%M')} <span style="color:#64748b; font-size:11px;">+{st.session_state.grace_minutes}m</span></div>
+            <div style="background:rgba(13,148,136,0.08); padding:10px 16px; border-radius:12px; border:1px solid rgba(13,148,136,0.25);">
+                <div style="color:#475569; font-size:9.5px; text-transform:uppercase; letter-spacing:0.09em; font-weight:700;">Office Start</div>
+                <div style="font-weight:800; color:#0f766e; font-size:13px; margin-top:2px;">{st.session_state.office_start.strftime('%H:%M')} <span style="color:#64748b; font-size:11px;">+{st.session_state.grace_minutes}m</span></div>
             </div>
-            <div style="background:rgba(255,255,255,0.05); padding:10px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.12);">
-                <div style="color:#94a3b8; font-size:9.5px; text-transform:uppercase; letter-spacing:0.09em; font-weight:700;">Perimeter</div>
-                <div style="font-weight:800; color:#f1f5f9; font-size:13px; margin-top:2px;">{st.session_state.office_radius_m}m <span style="color:#64748b; font-size:11px;">radius</span></div>
+            <div style="background:rgba(15,23,42,0.04); padding:10px 16px; border-radius:12px; border:1px solid rgba(15,23,42,0.10);">
+                <div style="color:#475569; font-size:9.5px; text-transform:uppercase; letter-spacing:0.09em; font-weight:700;">Perimeter</div>
+                <div style="font-weight:800; color:#0f172a; font-size:13px; margin-top:2px;">{st.session_state.office_radius_m}m <span style="color:#64748b; font-size:11px;">radius</span></div>
             </div>
         </div>
     </div>
@@ -801,14 +836,14 @@ if nav_choice == "Executive Dashboard":
         if not df_emp.empty:
             dc = df_emp["department"].value_counts().reset_index()
             dc.columns = ["Department", "Staff Count"]
-            st.bar_chart(dc.set_index("Department"), color="#14b8a6")
+            st.bar_chart(dc.set_index("Department"), color="#0d9488")
     with c_ch2:
         st.markdown("##### Payroll by Department")
         if not df_emp.empty:
             df_emp["gross"] = df_emp["basic_salary"] * 1.5
             dp = df_emp.groupby("department")["gross"].sum().reset_index()
             dp.columns = ["Department", "Monthly Gross"]
-            st.bar_chart(dp.set_index("Department"), color="#06b6d4")
+            st.bar_chart(dp.set_index("Department"), color="#0891b2")
 
     st.markdown("---")
     st.subheader("📜 Live Audit Trail")
@@ -938,7 +973,7 @@ elif nav_choice in ["All Employees Directory (M3)", "Employees Management (M3)",
             st.download_button("📤 Export CSV", data=filtered.to_csv(index=False).encode("utf-8"),
                                file_name="employees.csv", mime="text/csv")
 
-# ----------------- ATTENDANCE (REAL FACE DETECTION) -----------------
+# ----------------- ATTENDANCE -----------------
 elif nav_choice in ["Company Attendance Monitor (M4)", "Daily Attendance Board (M4)", "🕒 Mark Web & Camera Attendance (M4)", "My Attendance History (M4)"]:
     st.header("🕒 Attendance & Face-Verified Check-in")
 
@@ -1175,16 +1210,16 @@ elif nav_choice in ["Payroll Finalization & Lock (M6)", "Monthly Payroll Run (M6
         if my_slip:
             st.markdown(f"""
             <div class="payslip-box">
-                <h3 style="color:#5eead4; margin:0;">{st.session_state.company_name}</h3>
-                <div style="font-size:12px; color:#94a3b8; margin-bottom:16px;">Pay Statement — October 2026</div>
+                <h3 style="color:#0f766e; margin:0;">{st.session_state.company_name}</h3>
+                <div style="font-size:12px; color:#64748b; margin-bottom:16px;">Pay Statement — October 2026</div>
                 <table style="width:100%; font-size:13px; border-collapse:collapse;">
-                    <tr style="border-bottom:1px solid #1e293b;"><td class="ps-label" style="padding:8px 0;">Basic</td><td class="ps-val">PKR {my_slip['basic_salary']:,.2f}</td></tr>
-                    <tr style="border-bottom:1px solid #1e293b;"><td class="ps-label" style="padding:8px 0;">HRA (40%)</td><td class="ps-val">PKR {my_slip['hra']:,.2f}</td></tr>
-                    <tr style="border-bottom:1px solid #1e293b;"><td class="ps-label" style="padding:8px 0;">Medical (10%)</td><td class="ps-val">PKR {my_slip['medical']:,.2f}</td></tr>
-                    <tr style="border-bottom:2px solid #243447;"><td style="padding:10px 0; color:#5eead4; font-weight:700;">Gross</td><td class="ps-val" style="color:#5eead4; font-weight:700;">PKR {my_slip['gross_salary']:,.2f}</td></tr>
-                    <tr><td class="ps-label" style="padding:8px 0; color:#f87171;">Deductions</td><td class="ps-val" style="color:#f87171;">- PKR {my_slip['deductions']:,.2f}</td></tr>
-                    <tr><td class="ps-label" style="padding:8px 0; color:#fbbf24;">Tax</td><td class="ps-val" style="color:#fbbf24;">- PKR {my_slip['tax']:,.2f}</td></tr>
-                    <tr><td style="padding:14px 0 0 0; font-size:15px; font-weight:800; color:#34d399;">Net</td><td class="ps-val" style="padding:14px 0 0 0; font-size:16px; font-weight:800; color:#34d399;">PKR {my_slip['net_salary']:,.2f}</td></tr>
+                    <tr style="border-bottom:1px solid #e2e8f0;"><td class="ps-label" style="padding:8px 0;">Basic</td><td class="ps-val">PKR {my_slip['basic_salary']:,.2f}</td></tr>
+                    <tr style="border-bottom:1px solid #e2e8f0;"><td class="ps-label" style="padding:8px 0;">HRA (40%)</td><td class="ps-val">PKR {my_slip['hra']:,.2f}</td></tr>
+                    <tr style="border-bottom:1px solid #e2e8f0;"><td class="ps-label" style="padding:8px 0;">Medical (10%)</td><td class="ps-val">PKR {my_slip['medical']:,.2f}</td></tr>
+                    <tr style="border-bottom:2px solid #cbd5e1;"><td style="padding:10px 0; color:#0f766e; font-weight:700;">Gross</td><td class="ps-val" style="color:#0f766e; font-weight:700;">PKR {my_slip['gross_salary']:,.2f}</td></tr>
+                    <tr><td class="ps-label" style="padding:8px 0; color:#dc2626;">Deductions</td><td class="ps-val" style="color:#dc2626;">- PKR {my_slip['deductions']:,.2f}</td></tr>
+                    <tr><td class="ps-label" style="padding:8px 0; color:#ca8a04;">Tax</td><td class="ps-val" style="color:#ca8a04;">- PKR {my_slip['tax']:,.2f}</td></tr>
+                    <tr><td style="padding:14px 0 0 0; font-size:15px; font-weight:800; color:#059669;">Net</td><td class="ps-val" style="padding:14px 0 0 0; font-size:16px; font-weight:800; color:#059669;">PKR {my_slip['net_salary']:,.2f}</td></tr>
                 </table>
             </div>
             """, unsafe_allow_html=True)
@@ -1235,8 +1270,8 @@ elif nav_choice == "5-Min Hackathon Demo Guide":
 # ----------------- FOOTER -----------------
 st.markdown("---")
 st.markdown("""
-<div style="text-align:center; font-size:11.5px; color:#475569; padding:14px 0;">
-    Saylani IT Training Hackathon 2026 · <span style="color:#5eead4; font-weight:600;">HCM Lite</span> · Zaitoon Ashraf IT Park<br/>
-    <span style="font-size:10.5px;">Python · Streamlit · Pandas · OpenCV Face Verification · JSON Persistence</span>
+<div style="text-align:center; font-size:11.5px; color:#64748b; padding:14px 0;">
+    Saylani IT Training Hackathon 2026 · <span style="color:#0f766e; font-weight:600;">HCM Lite</span> · Zaitoon Ashraf IT Park<br/>
+    <span style="font-size:10.5px; color:#94a3b8;">Python · Streamlit · Pandas · OpenCV Face Verification · JSON Persistence</span>
 </div>
 """, unsafe_allow_html=True)

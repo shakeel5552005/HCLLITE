@@ -602,6 +602,7 @@ if not st.session_state.get("is_logged_in", False):
         <div class="login-badge">HCM</div>
         <h1 class="login-title">Saylani Hackathon 2026</h1>
         <h3 class="login-subtitle">HCM Lite — AI-Assisted Human Capital Management</h3>
+        <h4 class="login-subtitle">Prepared by Shakeel Ahmed Rol no. 778197</h4>
         <p class="login-desc">
             Select your designated role to enter the system.<br/>
             Each role operates with its own dedicated menus, database permissions, and AI assistant scope.
